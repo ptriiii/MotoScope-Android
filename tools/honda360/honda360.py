@@ -35,6 +35,10 @@ AUTHORIZATION_NOTE = (
 )
 
 
+class HondaAccessBlockedError(RuntimeError):
+    """Raised when Honda actively blocks a public-page request."""
+
+
 @dataclass
 class Frame:
     source_order: int
@@ -65,7 +69,7 @@ def fetch(url: str, delay: float, retries: int = 3) -> bytes:
                 body, status_bytes = result.stdout.rsplit(status_marker, 1)
                 status = int(status_bytes.decode("ascii"))
                 if status in {401, 403, 407, 429}:
-                    raise RuntimeError(f"access actively blocked for {url}: HTTP {status}")
+                    raise HondaAccessBlockedError(f"access actively blocked for {url}: HTTP {status}")
                 if status >= 400 and status != 500:
                     raise RuntimeError(f"request returned HTTP {status}: {url}")
                 # Honda's current Next.js product response can be a complete
@@ -78,7 +82,7 @@ def fetch(url: str, delay: float, retries: int = 3) -> bytes:
         except (HTTPError, URLError, TimeoutError) as error:
             last_error = error
             if isinstance(error, HTTPError) and error.code in {401, 403, 407, 429}:
-                raise RuntimeError(f"access actively blocked for {url}: HTTP {error.code}") from error
+                raise HondaAccessBlockedError(f"access actively blocked for {url}: HTTP {error.code}") from error
         except subprocess.CalledProcessError as error:
             message = error.stderr.decode("utf-8", errors="replace").strip()
             last_error = RuntimeError(message or f"curl exit code {error.returncode}")
@@ -312,6 +316,8 @@ def archive_sequence(
                 if not local_path.is_file():
                     raise OSError(f"downloaded file did not remain on disk: {local_path}")
                 local_hash = sha256_bytes(asset_data)
+            except HondaAccessBlockedError:
+                raise
             except Exception as error:  # retain partial status; never call it success
                 failures.append({"url": frame.url, "error": str(error)})
                 continue
@@ -382,7 +388,7 @@ def archive_sequence(
     }
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--model", help="stable slug discovered from the live catalog, e.g. click125-standard")
@@ -390,11 +396,15 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=Path("prototype-assets/honda"))
     parser.add_argument("--delay", type=float, default=0.35, help="seconds between requests (default: 0.35)")
     parser.add_argument("--omit-authorization-note", action="store_true", help="omit the owner-attested note from generated metadata")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     if args.delay < 0.1:
         parser.error("--delay must be at least 0.1 seconds")
-    catalog = discover_catalog(args.delay)
+    try:
+        catalog = discover_catalog(args.delay)
+    except HondaAccessBlockedError as error:
+        print(str(error), file=sys.stderr)
+        return 3
     if not catalog:
         print("No motorcycle entries discovered from the live catalog.", file=sys.stderr)
         return 2
@@ -408,6 +418,9 @@ def main() -> int:
     for entry in entries:
         try:
             result = archive_sequence(entry, args.output, args.delay, not args.omit_authorization_note)
+        except HondaAccessBlockedError as error:
+            print(str(error), file=sys.stderr)
+            return 3
         except Exception as error:
             result = {"slug": entry["slug"], "sourceProductUrl": entry["url"], "status": "unavailable", "error": str(error)}
         results.append(result)
