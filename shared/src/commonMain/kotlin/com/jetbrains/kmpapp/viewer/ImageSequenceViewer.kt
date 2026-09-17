@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -20,19 +18,24 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun MotorcycleViewer(
     modifier: Modifier = Modifier,
+    gestureModifier: Modifier = Modifier.fillMaxSize(),
+    rotationReferenceWidthPx: Float? = null,
+    onHorizontalIntentLocked: () -> Unit = {},
 ) {
     ImageSequenceViewer(
         frames = click125StandardFrames,
         contentDescription = "Honda Click125 Standard motorcycle",
         initialFrameIndex = 26,
         modifier = modifier,
+        gestureModifier = gestureModifier,
+        rotationReferenceWidthPx = rotationReferenceWidthPx,
+        onHorizontalIntentLocked = onHorizontalIntentLocked,
     )
 }
 
@@ -42,36 +45,48 @@ fun ImageSequenceViewer(
     contentDescription: String,
     initialFrameIndex: Int = 0,
     modifier: Modifier = Modifier,
+    gestureModifier: Modifier = Modifier.fillMaxSize(),
+    rotationReferenceWidthPx: Float? = null,
+    onHorizontalIntentLocked: () -> Unit = {},
 ) {
     val state = remember(frames, initialFrameIndex) {
         FrameSequenceState(frames.size, initialFrameIndex)
     }
+    val onHorizontalIntentLockedState = rememberUpdatedState(onHorizontalIntentLocked)
     if (!state.isValid) {
         Box(modifier = modifier.fillMaxWidth().aspectRatio(1.30f))
         return
     }
 
     Box(
-        modifier = modifier
-            .fillMaxWidth()
-            .sizeIn(maxHeight = 520.dp)
-            .aspectRatio(1.30f)
-            .clipToBounds()
-            .semantics(mergeDescendants = true) {
-                this.contentDescription = "$contentDescription, angle ${state.currentIndex + 1} of ${frames.size}"
-                customActions = listOf(
-                    CustomAccessibilityAction("Rotate motorcycle left") {
-                        state.decrement()
-                        true
-                    },
-                    CustomAccessibilityAction("Rotate motorcycle right") {
-                        state.increment()
-                        true
-                    },
-                )
-            }
-            .pointerInput(frames) {
+        modifier = modifier.aspectRatio(2048f / 1332f),
+    ) {
+        Image(
+            painter = painterResource(frames[state.currentIndex]),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
+            contentScale = ContentScale.Fit,
+        )
+        Box(
+            modifier = gestureModifier
+                .semantics(mergeDescendants = true) {
+                    this.contentDescription = "$contentDescription, angle ${state.currentIndex + 1} of ${frames.size}"
+                    customActions = listOf(
+                        CustomAccessibilityAction("Rotate motorcycle left") {
+                            onHorizontalIntentLockedState.value()
+                            state.decrement()
+                            true
+                        },
+                        CustomAccessibilityAction("Rotate motorcycle right") {
+                            onHorizontalIntentLockedState.value()
+                            state.increment()
+                            true
+                        },
+                    )
+                }
+                .pointerInput(frames, rotationReferenceWidthPx) {
                 val touchSlop = viewConfiguration.touchSlop
+                val dragWidthPx = rotationReferenceWidthPx?.takeIf { it > 0f } ?: size.width.toFloat()
 
                 awaitEachGesture {
                     val down = awaitFirstDown(requireUnconsumed = false)
@@ -97,8 +112,9 @@ fun ImageSequenceViewer(
                                 return@awaitEachGesture
                             }
 
+                            onHorizontalIntentLockedState.value()
                             change.consume()
-                            state.onHorizontalDrag(totalDeltaX, size.width.toFloat())
+                            state.onHorizontalDrag(totalDeltaX, dragWidthPx)
                         }
                     }
 
@@ -112,19 +128,12 @@ fun ImageSequenceViewer(
                             lastPosition = change.position
                             if (horizontalDelta != 0f) {
                                 change.consume()
-                                state.onHorizontalDrag(horizontalDelta, size.width.toFloat())
+                                state.onHorizontalDrag(horizontalDelta, dragWidthPx)
                             }
                         }
                     }
                 }
             },
-        contentAlignment = Alignment.Center,
-    ) {
-        Image(
-            painter = painterResource(frames[state.currentIndex]),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
-            contentScale = ContentScale.Crop,
         )
     }
 }
