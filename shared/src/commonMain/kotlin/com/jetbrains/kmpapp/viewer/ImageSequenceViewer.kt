@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -17,10 +18,14 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun MotorcycleViewer(modifier: Modifier = Modifier) {
+fun MotorcycleViewer(
+    isLandscape: Boolean,
+    modifier: Modifier = Modifier,
+) {
     ImageSequenceViewer(
         frames = click125StandardFrames,
         contentDescription = "Honda Click125 Standard motorcycle",
+        imageScale = if (isLandscape) 0.85f else 1.25f,
         modifier = modifier,
     )
 }
@@ -29,6 +34,7 @@ fun MotorcycleViewer(modifier: Modifier = Modifier) {
 fun ImageSequenceViewer(
     frames: List<DrawableResource>,
     contentDescription: String,
+    imageScale: Float = 1f,
     modifier: Modifier = Modifier,
 ) {
     val state = remember(frames) { FrameSequenceState(frames.size) }
@@ -53,7 +59,12 @@ fun ImageSequenceViewer(
         Image(
             painter = painterResource(frames[state.currentIndex]),
             contentDescription = contentDescription,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .graphicsLayer {
+                    scaleX = imageScale
+                    scaleY = imageScale
+                },
             contentScale = ContentScale.Fit,
         )
     }
