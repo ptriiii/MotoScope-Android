@@ -1,6 +1,6 @@
-# MotoScope V0.5
+# MotoScope V1 portrait slice
 
-This repository contains the bounded Kotlin Multiplatform + Compose Multiplatform V0.5 vertical slice: one shared `MotoScope` screen with one offline Honda Click125 Standard image-sequence viewer. The viewer uses 36 local WebP resources and a circular, fractional horizontal drag state machine; it has no runtime networking, backend, database, DI framework, or 3D renderer.
+This repository contains the bounded Kotlin Multiplatform + Compose Multiplatform MotoScope V1 portrait home slice. It keeps one offline Honda Click125 Standard viewer with 36 local WebP resources, circular fractional horizontal rotation, a vertically scrollable portrait page, visual-only feature previews, and a fixed provisional bottom-navigation shell. Home is the only available destination; Stats, Garage, and More are disabled placeholders. Landscape remains deferred. There is no runtime networking, backend, database, DI framework, or 3D renderer.
 
 ## Build and test
 

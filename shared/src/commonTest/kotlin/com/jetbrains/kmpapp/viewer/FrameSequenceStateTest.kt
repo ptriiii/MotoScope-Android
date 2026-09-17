@@ -55,4 +55,16 @@ class FrameSequenceStateTest {
         state.onHorizontalDrag(100f, 1000f)
         assertEquals(0, state.currentIndex)
     }
+
+    @Test fun horizontalDirectionWinsWhenHorizontalMovementIsLarger() {
+        assertEquals(GestureDirection.Horizontal, classifyGestureDirection(24f, 10f))
+    }
+
+    @Test fun verticalDirectionWinsWhenVerticalMovementIsLarger() {
+        assertEquals(GestureDirection.Vertical, classifyGestureDirection(10f, 24f))
+    }
+
+    @Test fun equalAxisMovementYieldsToVerticalScroll() {
+        assertEquals(GestureDirection.Vertical, classifyGestureDirection(18f, 18f))
+    }
 }
