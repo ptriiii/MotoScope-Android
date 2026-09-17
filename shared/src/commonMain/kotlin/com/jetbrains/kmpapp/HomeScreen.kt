@@ -36,7 +36,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -49,6 +48,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.vector.PathParser
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -56,7 +56,6 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -65,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextGeometricTransform
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.motoscope.viewer.MotorcycleViewer
@@ -78,13 +78,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import kotlin.math.max
+import kotlin.math.ceil
 
 private val Ink = Color(0xFF111111)
 private val MutedInk = Color(0xFF687084)
 private val CardSurface = Color(0xFFFCFCFC)
 private val FeatureSurface = Color(0xFFF5F5F5)
 private const val GoldenViewportWidthDp = 411.42856f
+
+// Measured from the bundled Kaushan Script glyph outlines at the baseline. Keeping this
+// proportion with the TextLayoutResult makes the flow region follow font scaling without using
+// a fixed negative visual offset.
+private const val KaushanInkBottomFromBaselineEm = 0.079f
+private const val KaushanWordScaleX = 1.045f
+private val SectionHeadingInkLead = 4.5.dp
 
 private data class MotoScopeFonts(
     val manrope: FontFamily,
@@ -307,12 +314,14 @@ private fun HeroLayout(
 @Composable
 private fun NicknameRegion(fonts: MotoScopeFonts, viewportScale: Float) {
     val text = "Kiro"
+    val fontSize = 48.sp
     val style = TextStyle(
         color = Ink,
         fontFamily = fonts.kaushanScript,
-        fontSize = 51.sp,
-        lineHeight = 55.sp,
+        fontSize = fontSize,
+        lineHeight = 52.sp,
         fontWeight = FontWeight.Normal,
+        textGeometricTransform = TextGeometricTransform(scaleX = KaushanWordScaleX),
     )
     val textMeasurer = rememberTextMeasurer()
     val layoutResult = textMeasurer.measure(
@@ -321,50 +330,46 @@ private fun NicknameRegion(fonts: MotoScopeFonts, viewportScale: Float) {
         maxLines = 1,
         softWrap = false,
     )
-    val inkBounds = layoutResult.visibleInkBounds()
     val density = LocalDensity.current
-    val desiredTopFromRegion = with(density) { (16.dp * viewportScale).toPx() }
-    val topPadding = with(density) {
-        max(0f, desiredTopFromRegion - inkBounds.top).toDp()
-    }
+    val fontSizePx = with(density) { fontSize.toPx() }
+    val lineTop = layoutResult.getLineTop(0)
+    val baseline = layoutResult.getLineBaseline(0)
+    val visibleBottom = baseline + (fontSizePx * KaushanInkBottomFromBaselineEm)
     val desiredInkToContentGap = with(density) { (9.dp * viewportScale).toPx() }
-    val lineTail = layoutResult.size.height - inkBounds.bottom
-    val bottomPadding = with(density) {
-        max(0f, desiredInkToContentGap - lineTail).toDp()
-    }
+    val nextSectionInkLead = with(density) { SectionHeadingInkLead.toPx() }
+    val regionHeight = ceil(
+        visibleBottom - lineTop + desiredInkToContentGap - nextSectionInkLead,
+    ).toInt().coerceAtLeast(1)
 
-    Column(
+    // Flow height is derived from the measured glyph ink rather than the font line box. The text
+    // child may extend beyond that line box without being clipped; the measured region protects
+    // the exact visible-ink-to-content gap while keeping the hero above it unchanged.
+    Layout(
+        content = {
+            Text(
+                text = text,
+                maxLines = 1,
+                softWrap = false,
+                style = style,
+            )
+        },
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.height(topPadding))
-        Text(
-            text = text,
-            color = Ink,
-            fontFamily = fonts.kaushanScript,
-            fontSize = 51.sp,
-            lineHeight = 55.sp,
-            fontWeight = FontWeight.Normal,
+    ) { measurables, constraints ->
+        // The parent intentionally fills the content width, but the nickname child must retain
+        // its measured natural width so that the visible glyphs can be centered independently.
+        val childWidth = layoutResult.size.width.coerceAtMost(constraints.maxWidth)
+        val child = measurables.single().measure(
+            Constraints.fixed(width = childWidth, height = layoutResult.size.height),
         )
-        Spacer(Modifier.height(bottomPadding))
-    }
-}
-
-private fun TextLayoutResult.visibleInkBounds(): Rect {
-    var left = Float.POSITIVE_INFINITY
-    var top = Float.POSITIVE_INFINITY
-    var right = Float.NEGATIVE_INFINITY
-    var bottom = Float.NEGATIVE_INFINITY
-    for (index in layoutInput.text.indices) {
-        val box = getBoundingBox(index)
-        if (!box.isEmpty) {
-            left = minOf(left, box.left)
-            top = minOf(top, box.top)
-            right = maxOf(right, box.right)
-            bottom = maxOf(bottom, box.bottom)
+        layout(constraints.maxWidth, regionHeight) {
+            child.placeRelative(
+                x = (constraints.maxWidth - child.width) / 2,
+                // Keep the font's natural baseline position. Only the parent flow height is
+                // reduced to the measured visible ink, so the hero and nickname do not move.
+                y = 0,
+            )
         }
     }
-    return if (left.isFinite()) Rect(left, top, right, bottom) else Rect.Zero
 }
 
 @Composable
@@ -740,6 +745,10 @@ private enum class MaterialSymbol {
     Build,
     Inventory2,
     Description,
+    Article,
+    Balance,
+    Handyman,
+    ViewInAr,
     CompareArrows,
     Speed,
     RotateRight,
@@ -751,14 +760,14 @@ private fun VisualIcon.materialSymbol(): MaterialSymbol = when (this) {
     VisualIcon.Power -> MaterialSymbol.Speed
     VisualIcon.Torque -> MaterialSymbol.RotateRight
     VisualIcon.Weight -> MaterialSymbol.Weight
-    VisualIcon.Tools -> MaterialSymbol.Build
-    VisualIcon.Parts -> MaterialSymbol.Inventory2
+    VisualIcon.Tools -> MaterialSymbol.Handyman
+    VisualIcon.Parts -> MaterialSymbol.ViewInAr
     VisualIcon.Clipboard -> MaterialSymbol.Description
-    VisualIcon.Compare -> MaterialSymbol.CompareArrows
+    VisualIcon.Compare -> MaterialSymbol.Balance
     VisualIcon.Home -> MaterialSymbol.HomeFilled
     VisualIcon.Stats -> MaterialSymbol.BarChart
     VisualIcon.Garage -> MaterialSymbol.TwoWheeler
-    VisualIcon.More -> MaterialSymbol.MoreHoriz
+    VisualIcon.More -> MaterialSymbol.Article
 }
 
 private fun MaterialSymbol.pathData(): String = when (this) {
@@ -780,6 +789,14 @@ private fun MaterialSymbol.pathData(): String = when (this) {
         "M200-80q-33 0-56.5-23.5T120-160v-451q-18-11-29-28.5T80-680v-120q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v120q0 23-11 40.5T840-611v451q0 33-23.5 56.5T760-80H200Zm0-520v440h560v-440H200Zm-40-80h640v-120H160v120Zm240 280h160q17 0 28.5-11.5T600-440q0-17-11.5-28.5T560-480H400q-17 0-28.5 11.5T360-440q0 17 11.5 28.5T400-400Zm80 20Z"
     MaterialSymbol.Description ->
         "M360-240h240q17 0 28.5-11.5T640-280q0-17-11.5-28.5T600-320H360q-17 0-28.5 11.5T320-280q0 17 11.5 28.5T360-240Zm0-160h240q17 0 28.5-11.5T640-440q0-17-11.5-28.5T600-480H360q-17 0-28.5 11.5T320-440q0 17 11.5 28.5T360-400ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h287q16 0 30.5 6t25.5 17l194 194q11 11 17 25.5t6 30.5v447q0 33-23.5 56.5T720-80H240Zm280-560v-160H240v640h480v-440H560q-17 0-28.5-11.5T520-640ZM240-800v200-200 640-640Z"
+    MaterialSymbol.Article ->
+        "M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Zm120 480h200q17 0 28.5-11.5T560-320q0-17-11.5-28.5T520-360H320q-17 0-28.5 11.5T280-320q0 17 11.5 28.5T320-280Zm0-160h320q17 0 28.5-11.5T680-480q0-17-11.5-28.5T640-520H320q-17 0-28.5 11.5T280-480q0 17 11.5 28.5T320-440Zm0-160h320q17 0 28.5-11.5T680-640q0-17-11.5-28.5T640-680H320q-17 0-28.5 11.5T280-640q0 17 11.5 28.5T320-600Z"
+    MaterialSymbol.Balance ->
+        "M120-120q-17 0-28.5-11.5T80-160q0-17 11.5-28.5T120-200h320v-447q-26-9-45-28t-28-45H240l110 258q5 11 6 22.5t-1 23.5q-9 46-49.5 71T220-320q-45 0-85.5-25T85-416q-2-12-1-23.5t6-22.5l110-258h-40q-17 0-28.5-11.5T120-760q0-17 11.5-28.5T160-800h207q12-35 43-57.5t70-22.5q39 0 70 22.5t43 57.5h207q17 0 28.5 11.5T840-760q0 17-11.5 28.5T800-720h-40l110 258q5 11 6 22.5t-1 23.5q-9 46-49.5 71T740-320q-45 0-85.5-25T605-416q-2-12-1-23.5t6-22.5l110-258H593q-9 26-28 45t-45 28v447h320q17 0 28.5 11.5T880-160q0 17-11.5 28.5T840-120H120Zm545-320h150l-75-174-75 174Zm-520 0h150l-75-174-75 174Zm335-280q17 0 28.5-11.5T520-760q0-17-11.5-28.5T480-800q-17 0-28.5 11.5T440-760q0 17 11.5 28.5T480-720Z"
+    MaterialSymbol.Handyman ->
+        "M754-81q-8 0-15-2.5T726-92L522-296q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l85-85q6-6 13-8.5t15-2.5q8 0 15 2.5t13 8.5l204 204q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13l-85 85q-6 6-13 8.5T754-81Zm0-95 29-29-147-147-29 29 147 147ZM205-80q-8 0-15.5-3T176-92l-84-84q-6-6-9-13.5T80-205q0-8 3-15t9-13l212-212h85l34-34-165-165h-57L80-765l113-113 121 121v57l165 165 116-116-43-43 56-56H495l-28-28 142-142 28 28v113l56-56 142 142q17 17 26 38.5t9 45.5q0 24-9 46t-26 39l-85-85-56 56-42-42-207 207v84L233-92q-6 6-13 9t-15 3Zm0-96 170-170v-29h-29L176-205l29 29Zm0 0-29-29 15 14 14 15Zm549 0 29-29-29 29Z"
+    MaterialSymbol.ViewInAr ->
+        "M440-181 240-296q-19-11-29.5-29T200-365v-230q0-22 10.5-40t29.5-29l200-115q19-11 40-11t40 11l200 115q19 11 29.5 29t10.5 40v230q0 22-10.5 40T720-296L520-181q-19 11-40 11t-40-11Zm0-92v-184l-160-93v185l160 92Zm80 0 160-92v-185l-160 93v184ZM120-640q-17 0-28.5-11.5T80-680v-120q0-33 23.5-56.5T160-880h120q17 0 28.5 11.5T320-840q0 17-11.5 28.5T280-800H160v120q0 17-11.5 28.5T120-640Zm40 560q-33 0-56.5-23.5T80-160v-120q0-17 11.5-28.5T120-320q17 0 28.5 11.5T160-280v120h120q17 0 28.5 11.5T320-120q0 17-11.5 28.5T280-80H160Zm640 0H680q-17 0-28.5-11.5T640-120q0-17 11.5-28.5T680-160h120v-120q0-17 11.5-28.5T840-320q17 0 28.5 11.5T880-280v120q0 33-23.5 56.5T800-80Zm0-600v-120H680q-17 0-28.5-11.5T640-840q0-17 11.5-28.5T680-800h120q33 0 56.5 23.5T880-720v120q0 17-11.5 28.5T840-640q-17 0-28.5-11.5T800-680ZM480-526l158-93-158-91-158 91 158 93Zm0 45Zm0-45Zm40 69Zm-80 0Z"
     MaterialSymbol.CompareArrows ->
         "M367-320H120q-17 0-28.5-11.5T80-360q0-17 11.5-28.5T120-400h247l-75-75q-11-11-11-27.5t11-28.5q12-12 28.5-12t28.5 12l143 143q6 6 8.5 13t2.5 15q0 8-2.5 15t-8.5 13L348-188q-12 12-28 11.5T292-189q-11-12-11.5-28t11.5-28l75-75Zm226-240 75 75q11 11 11 27.5T668-429q-12 12-28.5 12T611-429L468-572q-6-6-8.5-13t-2.5-15q0-8 2.5-15t8.5-13l144-144q12-12 28-11.5t28 12.5q11 12 11.5 28T668-715l-75 75h247q17 0 28.5 11.5T880-600q0 17-11.5 28.5T840-560H593Z"
     MaterialSymbol.Speed ->

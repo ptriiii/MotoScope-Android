@@ -21,6 +21,10 @@ The checked-in SVG files preserve the corresponding official path data and 960 x
 | `msr_build.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/build/materialsymbolsrounded/build_24px.svg |
 | `msr_inventory_2.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/inventory_2/materialsymbolsrounded/inventory_2_24px.svg |
 | `msr_description.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/description/materialsymbolsrounded/description_24px.svg |
+| `msr_article.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/article/materialsymbolsrounded/article_24px.svg |
+| `msr_balance.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/balance/materialsymbolsrounded/balance_24px.svg |
+| `msr_handyman.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/handyman/materialsymbolsrounded/handyman_24px.svg |
+| `msr_view_in_ar.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/view_in_ar/materialsymbolsrounded/view_in_ar_24px.svg |
 | `msr_compare_arrows.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/compare_arrows/materialsymbolsrounded/compare_arrows_24px.svg |
 | `msr_speed.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/speed/materialsymbolsrounded/speed_24px.svg |
 | `msr_rotate_right.svg` | https://raw.githubusercontent.com/google/material-design-icons/master/symbols/web/rotate_right/materialsymbolsrounded/rotate_right_24px.svg |
