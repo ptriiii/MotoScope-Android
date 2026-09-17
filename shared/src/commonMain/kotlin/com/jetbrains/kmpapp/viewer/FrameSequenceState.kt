@@ -5,10 +5,15 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 
 /** Small, platform-independent state machine for circular image-sequence scrubbing. */
-class FrameSequenceState(val frameCount: Int) {
+class FrameSequenceState(
+    val frameCount: Int,
+    initialIndex: Int = 0,
+) {
     private var fractionalFrameDelta = 0f
 
-    var currentIndex: Int by mutableIntStateOf(0)
+    var currentIndex: Int by mutableIntStateOf(
+        if (frameCount > 0) floorMod(initialIndex, frameCount) else 0,
+    )
         private set
 
     val isValid: Boolean get() = frameCount > 0

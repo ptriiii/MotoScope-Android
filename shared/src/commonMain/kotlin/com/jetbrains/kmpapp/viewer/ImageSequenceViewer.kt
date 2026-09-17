@@ -5,12 +5,14 @@ import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -29,6 +31,7 @@ fun MotorcycleViewer(
     ImageSequenceViewer(
         frames = click125StandardFrames,
         contentDescription = "Honda Click125 Standard motorcycle",
+        initialFrameIndex = 26,
         modifier = modifier,
     )
 }
@@ -37,11 +40,14 @@ fun MotorcycleViewer(
 fun ImageSequenceViewer(
     frames: List<DrawableResource>,
     contentDescription: String,
+    initialFrameIndex: Int = 0,
     modifier: Modifier = Modifier,
 ) {
-    val state = remember(frames) { FrameSequenceState(frames.size) }
+    val state = remember(frames, initialFrameIndex) {
+        FrameSequenceState(frames.size, initialFrameIndex)
+    }
     if (!state.isValid) {
-        Box(modifier = modifier.fillMaxWidth().aspectRatio(1.536f))
+        Box(modifier = modifier.fillMaxWidth().aspectRatio(1.30f))
         return
     }
 
@@ -49,7 +55,8 @@ fun ImageSequenceViewer(
         modifier = modifier
             .fillMaxWidth()
             .sizeIn(maxHeight = 520.dp)
-            .aspectRatio(2048f / 1332f)
+            .aspectRatio(1.30f)
+            .clipToBounds()
             .semantics(mergeDescendants = true) {
                 this.contentDescription = "$contentDescription, angle ${state.currentIndex + 1} of ${frames.size}"
                 customActions = listOf(
@@ -116,8 +123,8 @@ fun ImageSequenceViewer(
         Image(
             painter = painterResource(frames[state.currentIndex]),
             contentDescription = null,
-            modifier = Modifier.fillMaxWidth().clearAndSetSemantics {},
-            contentScale = ContentScale.Fit,
+            modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
+            contentScale = ContentScale.Crop,
         )
     }
 }

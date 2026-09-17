@@ -129,7 +129,7 @@ internal fun MotoScopeHomeScreen() {
                 )
                 Spacer(Modifier.height(22.dp))
                 HeroSection()
-                Spacer(Modifier.height(24.dp))
+                Spacer(Modifier.height(8.dp))
                 SpecificationsSection(columns = specColumns)
                 Spacer(Modifier.height(28.dp))
                 FeaturePreviewSection(columns = featureColumns)
@@ -210,9 +210,9 @@ private fun HeroSection() {
                 text = "Kiro",
                 color = Ink,
                 fontFamily = FontFamily.Cursive,
-                fontSize = 56.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-1).sp,
+                fontSize = 60.sp,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = (-1.5).sp,
             )
         }
     }
@@ -223,24 +223,32 @@ private fun RotationHint() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 48.dp)
+            .heightIn(min = 40.dp)
             .clearAndSetSemantics {
                 contentDescription = "Swipe horizontally to rotate the motorcycle"
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
     ) {
-        ChevronIcon(modifier = Modifier.size(28.dp), pointingLeft = true)
-        Spacer(Modifier.width(22.dp))
+        ChevronIcon(
+            modifier = Modifier.size(22.dp),
+            pointingLeft = true,
+            tint = MutedInk.copy(alpha = 0.8f),
+        )
+        Spacer(Modifier.width(18.dp))
         Text(
             text = "SWIPE TO ROTATE",
-            color = Ink,
-            fontSize = 12.sp,
+            color = MutedInk,
+            fontSize = 10.sp,
             fontWeight = FontWeight.Medium,
-            letterSpacing = 1.8.sp,
+            letterSpacing = 1.4.sp,
         )
-        Spacer(Modifier.width(22.dp))
-        ChevronIcon(modifier = Modifier.size(28.dp), pointingLeft = false)
+        Spacer(Modifier.width(18.dp))
+        ChevronIcon(
+            modifier = Modifier.size(22.dp),
+            pointingLeft = false,
+            tint = MutedInk.copy(alpha = 0.8f),
+        )
     }
 }
 
@@ -297,13 +305,13 @@ private fun SectionHeading(title: String) {
 private fun SpecificationCard(card: SpecCardData, modifier: Modifier = Modifier) {
     Card(
         modifier = modifier
-            .heightIn(min = 148.dp)
+            .heightIn(min = 136.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = "${card.label}, ${card.spokenValue}"
             },
-        shape = RoundedCornerShape(18.dp),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = CardSurface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
     ) {
         Column(
             modifier = Modifier
@@ -450,24 +458,31 @@ private fun VisualIcon(kind: VisualIcon, modifier: Modifier = Modifier, tint: Co
 
         when (kind) {
             VisualIcon.Engine -> {
+                val engine = Path().apply {
+                    moveTo(w * 0.25f, h * 0.3f)
+                    lineTo(w * 0.69f, h * 0.3f)
+                    lineTo(w * 0.78f, h * 0.43f)
+                    lineTo(w * 0.78f, h * 0.7f)
+                    lineTo(w * 0.64f, h * 0.82f)
+                    lineTo(w * 0.35f, h * 0.82f)
+                    lineTo(w * 0.22f, h * 0.68f)
+                    lineTo(w * 0.22f, h * 0.42f)
+                    close()
+                }
+                drawPath(engine, tint, style = stroke)
                 drawRoundRect(
                     color = tint,
-                    topLeft = Offset(w * 0.23f, h * 0.28f),
-                    size = Size(w * 0.54f, h * 0.46f),
+                    topLeft = Offset(w * 0.36f, h * 0.16f),
+                    size = Size(w * 0.28f, h * 0.2f),
                     cornerRadius = CornerRadius(w * 0.09f, h * 0.09f),
                     style = stroke,
                 )
-                drawLine(tint, Offset(w * 0.35f, h * 0.19f), Offset(w * 0.65f, h * 0.19f), strokeWidth)
-                drawLine(tint, Offset(w * 0.42f, h * 0.19f), Offset(w * 0.42f, h * 0.28f), strokeWidth)
-                drawLine(tint, Offset(w * 0.58f, h * 0.19f), Offset(w * 0.58f, h * 0.28f), strokeWidth)
-                drawLine(tint, Offset(w * 0.23f, h * 0.42f), Offset(w * 0.12f, h * 0.42f), strokeWidth)
-                drawLine(tint, Offset(w * 0.77f, h * 0.42f), Offset(w * 0.88f, h * 0.42f), strokeWidth)
-                drawCircle(
-                    color = tint,
-                    radius = w * 0.08f,
-                    center = Offset(w * 0.5f, h * 0.52f),
-                    style = stroke,
-                )
+                drawLine(tint, Offset(w * 0.16f, h * 0.42f), Offset(w * 0.23f, h * 0.42f), strokeWidth)
+                drawLine(tint, Offset(w * 0.77f, h * 0.42f), Offset(w * 0.87f, h * 0.42f), strokeWidth)
+                drawLine(tint, Offset(w * 0.31f, h * 0.49f), Offset(w * 0.67f, h * 0.49f), strokeWidth)
+                drawLine(tint, Offset(w * 0.31f, h * 0.61f), Offset(w * 0.67f, h * 0.61f), strokeWidth)
+                drawCircle(color = tint, radius = w * 0.055f, center = Offset(w * 0.37f, h * 0.72f), style = stroke)
+                drawCircle(color = tint, radius = w * 0.055f, center = Offset(w * 0.63f, h * 0.72f), style = stroke)
             }
             VisualIcon.Power -> {
                 drawArc(tint, 200f, 140f, false, style = stroke)
@@ -627,7 +642,11 @@ private fun VisualIcon(kind: VisualIcon, modifier: Modifier = Modifier, tint: Co
 }
 
 @Composable
-private fun ChevronIcon(modifier: Modifier, pointingLeft: Boolean) {
+private fun ChevronIcon(
+    modifier: Modifier,
+    pointingLeft: Boolean,
+    tint: Color = Ink,
+) {
     Canvas(modifier = modifier.clearAndSetSemantics {}) {
         val path = Path()
         if (pointingLeft) {
@@ -641,7 +660,7 @@ private fun ChevronIcon(modifier: Modifier, pointingLeft: Boolean) {
         }
         drawPath(
             path = path,
-            color = Ink,
+            color = tint,
             style = Stroke(width = size.minDimension * 0.09f, cap = StrokeCap.Round, join = StrokeJoin.Round),
         )
     }
@@ -732,16 +751,16 @@ private fun FloatingBottomNavigation(modifier: Modifier = Modifier) {
         modifier = modifier
             .widthIn(max = 720.dp)
             .fillMaxWidth()
-            .heightIn(min = 82.dp),
-        shape = RoundedCornerShape(44.dp),
+            .heightIn(min = 64.dp),
+        shape = RoundedCornerShape(34.dp),
         color = Color.White,
-        shadowElevation = 10.dp,
+        shadowElevation = 6.dp,
         tonalElevation = 0.dp,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             navigationItems.forEach { item ->
@@ -756,7 +775,7 @@ private fun NavigationItemView(item: NavigationItem, modifier: Modifier = Modifi
     val tint = if (item.active) Ink else MutedInk.copy(alpha = 0.72f)
     Column(
         modifier = modifier
-            .heightIn(min = 68.dp)
+            .heightIn(min = 52.dp)
             .clearAndSetSemantics {
                 contentDescription = item.label
                 if (item.active) selected = true else disabled()
@@ -764,8 +783,8 @@ private fun NavigationItemView(item: NavigationItem, modifier: Modifier = Modifi
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        VisualIcon(kind = item.icon, modifier = Modifier.size(30.dp), tint = tint)
-        Spacer(Modifier.height(3.dp))
+        VisualIcon(kind = item.icon, modifier = Modifier.size(26.dp), tint = tint)
+        Spacer(Modifier.height(2.dp))
         Text(
             text = item.label,
             color = tint,
@@ -773,7 +792,7 @@ private fun NavigationItemView(item: NavigationItem, modifier: Modifier = Modifi
             fontWeight = if (item.active) FontWeight.Medium else FontWeight.Normal,
         )
         if (item.active) {
-            Spacer(Modifier.height(3.dp))
+            Spacer(Modifier.height(2.dp))
             Box(
                 modifier = Modifier
                     .size(width = 42.dp, height = 3.dp)
@@ -781,7 +800,7 @@ private fun NavigationItemView(item: NavigationItem, modifier: Modifier = Modifi
                     .background(Ink),
             )
         } else {
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(4.dp))
         }
     }
 }

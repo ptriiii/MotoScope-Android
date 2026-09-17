@@ -56,6 +56,11 @@ class FrameSequenceStateTest {
         assertEquals(0, state.currentIndex)
     }
 
+    @Test fun initialIndexIsNormalizedForShowcaseFrame() {
+        assertEquals(2, FrameSequenceState(4, 6).currentIndex)
+        assertEquals(3, FrameSequenceState(4, -1).currentIndex)
+    }
+
     @Test fun horizontalDirectionWinsWhenHorizontalMovementIsLarger() {
         assertEquals(GestureDirection.Horizontal, classifyGestureDirection(24f, 10f))
     }
