@@ -6,6 +6,5 @@ These font files are bundled from the authoritative Google Fonts repository on 2
 | --- | --- | --- | --- |
 | Manrope variable family | `shared/src/commonMain/composeResources/font/manrope_wght.ttf` | https://raw.githubusercontent.com/google/fonts/main/ofl/manrope/Manrope%5Bwght%5D.ttf | `third_party/fonts/OFL-Manrope.txt` |
 | Anton Regular | `shared/src/commonMain/composeResources/font/anton_regular.ttf` | https://raw.githubusercontent.com/google/fonts/main/ofl/anton/Anton-Regular.ttf | `third_party/fonts/OFL-Anton.txt` |
-| Kaushan Script Regular | `shared/src/commonMain/composeResources/font/kaushan_script_regular.ttf` | https://raw.githubusercontent.com/google/fonts/main/ofl/kaushanscript/KaushanScript-Regular.ttf | `third_party/fonts/OFL-Kaushan-Script.txt` |
 
-The source directories are the Google Fonts `ofl/manrope`, `ofl/anton`, and `ofl/kaushanscript` directories in `google/fonts`.
+The source directories are the Google Fonts `ofl/manrope` and `ofl/anton` directories in `google/fonts`.

@@ -1,6 +1,6 @@
-# MotoScope V1 portrait slice
+# MotoScope showcase-first demo
 
-This repository contains the bounded Kotlin Multiplatform + Compose Multiplatform MotoScope V1 portrait home slice. It keeps one offline Honda Click125 Standard viewer with 36 local WebP resources, circular fractional horizontal rotation, a vertically scrollable portrait page, visual-only feature previews, and a fixed provisional bottom-navigation shell. Home is the only available destination; Stats, Garage, and More are disabled placeholders. Landscape remains deferred. There is no runtime networking, backend, database, DI framework, or 3D renderer.
+This repository contains the bounded Kotlin Multiplatform + Compose Multiplatform MotoScope showcase-first demo Home. It presents one Honda Click125 Standard with the offline 36-frame WebP viewer, circular fractional horizontal rotation, and a fixed provisional bottom-navigation shell. Home is the only available destination; Stats, Garage, and More are visible but disabled placeholders. The richer Portrait V1 Home is preserved in history at commit `593f738e0bf5b148b6f9176514e932649c1c0c1a`. Landscape and iOS remain deferred. There is no runtime networking, backend, database, DI framework, or 3D renderer.
 
 ## Build and test
 
