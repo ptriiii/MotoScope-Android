@@ -102,8 +102,8 @@ internal fun MotoScopeHomeScreen() {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .then(scrollModifier)
                 .safeDrawingPadding()
+                .then(scrollModifier)
                 .padding(horizontal = pagePadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
