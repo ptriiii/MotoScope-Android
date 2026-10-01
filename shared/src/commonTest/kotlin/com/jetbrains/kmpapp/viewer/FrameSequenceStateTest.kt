@@ -23,6 +23,18 @@ class FrameSequenceStateTest {
         assertEquals(0, state.currentIndex)
     }
 
+    @Test fun personalTwentyFourFrameSequenceWrapsAtBothEndsAndReversesImmediately() {
+        val state = FrameSequenceState(24)
+        state.decrement()
+        assertEquals(23, state.currentIndex)
+        state.increment()
+        assertEquals(0, state.currentIndex)
+        state.advanceBy(23)
+        assertEquals(23, state.currentIndex)
+        state.advanceBy(-1)
+        assertEquals(22, state.currentIndex)
+    }
+
     @Test fun largePositiveAndNegativeDeltasWrap() {
         val state = FrameSequenceState(6)
         state.advanceBy(25)

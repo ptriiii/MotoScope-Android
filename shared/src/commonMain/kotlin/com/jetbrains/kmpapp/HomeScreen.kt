@@ -22,6 +22,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -79,7 +80,10 @@ private fun motoScopeFonts(): MotoScopeFonts = MotoScopeFonts(
 )
 
 @Composable
-internal fun MotoScopeHomeScreen() {
+fun MotoScopeHomeScreen(
+    captureActionLabel: String? = null,
+    onCaptureAction: () -> Unit = {},
+) {
     val fonts = motoScopeFonts()
     val scrollState = rememberScrollState()
 
@@ -143,6 +147,22 @@ internal fun MotoScopeHomeScreen() {
                     fonts = fonts,
                     viewportScale = viewportScale,
                 )
+
+                if (captureActionLabel != null) {
+                    TextButton(
+                        onClick = onCaptureAction,
+                        modifier = Modifier.padding(top = 12.dp),
+                    ) {
+                        Text(
+                            text = captureActionLabel,
+                            color = MutedInk,
+                            fontFamily = fonts.manrope,
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                    }
+                }
 
                 if (!compactFallback) {
                     Spacer(Modifier.weight(1f))

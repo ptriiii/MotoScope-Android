@@ -8,10 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 
 @Composable
-fun App() {
+fun App(content: @Composable () -> Unit = { MotoScopeHomeScreen() }) {
     MaterialTheme {
         Surface(modifier = Modifier.fillMaxSize(), color = Color.White) {
-            MotoScopeHomeScreen()
+            content()
         }
     }
 }

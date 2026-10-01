@@ -49,8 +49,68 @@ fun ImageSequenceViewer(
     rotationReferenceWidthPx: Float? = null,
     onHorizontalIntentLocked: () -> Unit = {},
 ) {
-    val state = remember(frames, initialFrameIndex) {
-        FrameSequenceState(frames.size, initialFrameIndex)
+    ImageSequenceViewerCore(
+        frameCount = frames.size,
+        contentDescription = contentDescription,
+        initialFrameIndex = initialFrameIndex,
+        modifier = modifier,
+        gestureModifier = gestureModifier,
+        rotationReferenceWidthPx = rotationReferenceWidthPx,
+        onHorizontalIntentLocked = onHorizontalIntentLocked,
+        stateKey = frames,
+        canvasAspectRatio = 2048f / 1332f,
+    ) { index ->
+        Image(
+            painter = painterResource(frames[index]),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
+            contentScale = ContentScale.Fit,
+        )
+    }
+}
+
+/** Same frame state, gestures, and semantics for platform-provided image sources. */
+@Composable
+fun ImageSequenceViewerContent(
+    frameCount: Int,
+    contentDescription: String,
+    initialFrameIndex: Int = 0,
+    modifier: Modifier = Modifier,
+    gestureModifier: Modifier = Modifier.fillMaxSize(),
+    rotationReferenceWidthPx: Float? = null,
+    onHorizontalIntentLocked: () -> Unit = {},
+    canvasAspectRatio: Float = 2048f / 1332f,
+    frameContent: @Composable (Int) -> Unit,
+) {
+    ImageSequenceViewerCore(
+        frameCount = frameCount,
+        contentDescription = contentDescription,
+        initialFrameIndex = initialFrameIndex,
+        modifier = modifier,
+        gestureModifier = gestureModifier,
+        rotationReferenceWidthPx = rotationReferenceWidthPx,
+        onHorizontalIntentLocked = onHorizontalIntentLocked,
+        stateKey = frameCount,
+        canvasAspectRatio = canvasAspectRatio,
+        frameContent = frameContent,
+    )
+}
+
+@Composable
+private fun ImageSequenceViewerCore(
+    frameCount: Int,
+    contentDescription: String,
+    initialFrameIndex: Int,
+    modifier: Modifier,
+    gestureModifier: Modifier,
+    rotationReferenceWidthPx: Float?,
+    onHorizontalIntentLocked: () -> Unit,
+    stateKey: Any,
+    canvasAspectRatio: Float,
+    frameContent: @Composable (Int) -> Unit,
+) {
+    val state = remember(stateKey, initialFrameIndex) {
+        FrameSequenceState(frameCount, initialFrameIndex)
     }
     val onHorizontalIntentLockedState = rememberUpdatedState(onHorizontalIntentLocked)
     if (!state.isValid) {
@@ -59,18 +119,13 @@ fun ImageSequenceViewer(
     }
 
     Box(
-        modifier = modifier.aspectRatio(2048f / 1332f),
+        modifier = modifier.aspectRatio(canvasAspectRatio),
     ) {
-        Image(
-            painter = painterResource(frames[state.currentIndex]),
-            contentDescription = null,
-            modifier = Modifier.fillMaxSize().clearAndSetSemantics {},
-            contentScale = ContentScale.Fit,
-        )
+        frameContent(state.currentIndex)
         Box(
             modifier = gestureModifier
                 .semantics(mergeDescendants = true) {
-                    this.contentDescription = "$contentDescription, angle ${state.currentIndex + 1} of ${frames.size}"
+                    this.contentDescription = "$contentDescription, angle ${state.currentIndex + 1} of $frameCount"
                     customActions = listOf(
                         CustomAccessibilityAction("Rotate motorcycle left") {
                             onHorizontalIntentLockedState.value()
@@ -84,7 +139,7 @@ fun ImageSequenceViewer(
                         },
                     )
                 }
-                .pointerInput(frames, rotationReferenceWidthPx) {
+                .pointerInput(frameCount, rotationReferenceWidthPx) {
                 val touchSlop = viewConfiguration.touchSlop
                 val dragWidthPx = rotationReferenceWidthPx?.takeIf { it > 0f } ?: size.width.toFloat()
 

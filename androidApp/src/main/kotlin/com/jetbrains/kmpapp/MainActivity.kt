@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
+import com.motoscope.capture.MotoScopeAndroidRoot
 
 class MainActivity : ComponentActivity() {
     @Suppress("DEPRECATION")
@@ -27,7 +28,7 @@ class MainActivity : ComponentActivity() {
             window.isNavigationBarContrastEnforced = false
         }
         setContent {
-            App()
+            MotoScopeAndroidRoot(lifecycleOwner = this, activity = this)
         }
     }
 }
