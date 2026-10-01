@@ -1,6 +1,10 @@
-# MotoScope showcase-first demo
+# MotoScope demo
 
-This repository contains the bounded Kotlin Multiplatform + Compose Multiplatform MotoScope showcase-first demo Home. It presents one Honda Click125 Standard with the offline 36-frame WebP viewer, circular fractional horizontal rotation, and a fixed provisional bottom-navigation shell. Home is the only available destination; Stats, Garage, and More are visible but disabled placeholders. The richer Portrait V1 Home is preserved in history at commit `593f738e0bf5b148b6f9176514e932649c1c0c1a`. Landscape and iOS remain deferred. There is no runtime networking, backend, database, DI framework, or 3D renderer.
+## Current demo decision
+
+The active demo Home shows the interactive, offline 36-frame Click125 motorcycle viewer on a white canvas, plus a fixed floating Home / Stats / Garage / More navigation. Home is selected; Stats, Garage, and More remain visible but disabled. The MotoScope wordmark, HONDA and oversized CLICK125 display labels, and affiliate links are deferred from the current Home.
+
+This decision supersedes the active Home presentation introduced by `7dd3801` (showcase-first demo). The richer Portrait V1 Home remains in history at `593f738e0bf5b148b6f9176514e932649c1c0c1a`. Landscape and iOS remain deferred. There is no runtime networking, backend, database, DI framework, or 3D renderer.
 
 ## Build and test
 

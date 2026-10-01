@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.PathFillType
@@ -40,47 +39,31 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextGeometricTransform
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.motoscope.viewer.MotorcycleViewer
 import motoscope.shared.generated.resources.Res
-import motoscope.shared.generated.resources.anton_regular
 import motoscope.shared.generated.resources.manrope_wght
 import org.jetbrains.compose.resources.Font
+import com.motoscope.viewer.MotorcycleViewer
 
 private val Ink = Color(0xFF111111)
 private val MutedInk = Color(0xFF687084)
 private const val GoldenViewportWidthDp = 411.42856f
 
-private data class MotoScopeFonts(
-    val manrope: FontFamily,
-    val anton: FontFamily,
-)
-
 @Composable
-private fun motoScopeFonts(): MotoScopeFonts = MotoScopeFonts(
-    manrope = FontFamily(
-        Font(Res.font.manrope_wght, FontWeight.Normal),
-        Font(Res.font.manrope_wght, FontWeight.Medium),
-        Font(Res.font.manrope_wght, FontWeight.SemiBold),
-        Font(Res.font.manrope_wght, FontWeight.Bold),
-        Font(Res.font.manrope_wght, FontWeight.ExtraBold),
-    ),
-    anton = FontFamily(Font(Res.font.anton_regular, FontWeight.Normal)),
+private fun motoScopeFont(): FontFamily = FontFamily(
+    Font(Res.font.manrope_wght, FontWeight.Normal),
+    Font(Res.font.manrope_wght, FontWeight.Medium),
+    Font(Res.font.manrope_wght, FontWeight.SemiBold),
+    Font(Res.font.manrope_wght, FontWeight.Bold),
+    Font(Res.font.manrope_wght, FontWeight.ExtraBold),
 )
 
 @Composable
 internal fun MotoScopeHomeScreen() {
-    val fonts = motoScopeFonts()
+    val font = motoScopeFont()
     val scrollState = rememberScrollState()
 
     BoxWithConstraints(
@@ -89,71 +72,30 @@ internal fun MotoScopeHomeScreen() {
             .background(Color.White),
     ) {
         val density = LocalDensity.current
-        val fontScale = density.fontScale
         val viewportScale = (maxWidth.value / GoldenViewportWidthDp).coerceIn(0.72f, 1.12f)
-        val pagePadding = (18.dp * viewportScale).coerceIn(16.dp, 24.dp)
-        val compactFallback = maxHeight < 760.dp || maxWidth < 300.dp || fontScale > 1.15f
-        val scrollModifier = if (compactFallback) {
-            Modifier.verticalScroll(scrollState)
-        } else {
-            Modifier
-        }
+        val compactFallback = maxHeight < 760.dp || maxWidth < 300.dp || density.fontScale > 1.15f
+        val scrollModifier = if (compactFallback) Modifier.verticalScroll(scrollState) else Modifier
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .then(scrollModifier)
                 .safeDrawingPadding()
-                .padding(horizontal = pagePadding),
+                .padding(horizontal = (18.dp * viewportScale).coerceIn(16.dp, 24.dp)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .widthIn(max = 720.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = "MotoScope",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 28.dp * viewportScale)
-                        .offset(y = (-20).dp * viewportScale),
-                    color = Ink,
-                    fontFamily = fonts.manrope,
-                    fontSize = 19.3.sp,
-                    lineHeight = 23.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(117.5.dp * viewportScale))
-                Text(
-                    text = "HONDA",
-                    modifier = Modifier
-                        .offset(y = 14.dp * viewportScale)
-                        .clearAndSetSemantics {},
-                    color = Ink,
-                    fontFamily = fonts.manrope,
-                    fontSize = 15.sp,
-                    lineHeight = 18.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 10.sp,
-                )
-                ShowcaseStage(
-                    fonts = fonts,
-                    viewportScale = viewportScale,
-                )
+            Spacer(Modifier.height(170.dp * viewportScale))
+            MotorcycleShowcaseStage(viewportScale = viewportScale)
 
-                if (!compactFallback) {
-                    Spacer(Modifier.weight(1f))
-                } else {
-                    Spacer(Modifier.height(36.dp))
-                }
+            if (!compactFallback) {
+                Spacer(Modifier.weight(1f))
+            } else {
+                Spacer(Modifier.height(36.dp))
             }
         }
 
         FloatingBottomNavigation(
-            fonts = fonts,
+            font = font,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .navigationBarsPadding()
@@ -162,15 +104,8 @@ internal fun MotoScopeHomeScreen() {
     }
 }
 
-/**
- * The reduced home has one bounded showcase stage. The backdrop and the motorcycle remain
- * independent layers, while the viewer keeps the shared touch-slop and frame-state behavior.
- */
 @Composable
-private fun ShowcaseStage(
-    fonts: MotoScopeFonts,
-    viewportScale: Float,
-) {
+private fun MotorcycleShowcaseStage(viewportScale: Float) {
     BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
@@ -178,15 +113,7 @@ private fun ShowcaseStage(
         contentAlignment = Alignment.TopCenter,
     ) {
         val density = LocalDensity.current
-        val clickWidth = maxWidth
         val canvasWidth = (maxWidth * 1.28f).coerceAtMost(480.dp)
-        FittedClickBackdrop(
-            fonts = fonts,
-            desiredWidth = clickWidth,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .offset(y = (-19.5).dp * viewportScale),
-        )
         MotorcycleViewer(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -200,50 +127,6 @@ private fun ShowcaseStage(
             rotationReferenceWidthPx = with(density) { canvasWidth.toPx() },
         )
     }
-}
-
-@Composable
-private fun FittedClickBackdrop(
-    fonts: MotoScopeFonts,
-    desiredWidth: Dp,
-    modifier: Modifier = Modifier,
-) {
-    val style = TextStyle(
-        brush = Brush.verticalGradient(
-            colors = listOf(Color(0xFF1D1D1D), Color(0xFFE2E2E2)),
-        ),
-        fontFamily = fonts.anton,
-        fontSize = 148.sp,
-        lineHeight = 148.sp,
-        fontWeight = FontWeight.Normal,
-        textAlign = TextAlign.Center,
-    )
-    val textMeasurer = rememberTextMeasurer()
-    val measured = textMeasurer.measure(
-        text = AnnotatedString("CLICK125"),
-        style = style,
-        maxLines = 1,
-        softWrap = false,
-    )
-    val density = LocalDensity.current
-    val naturalWidth = with(density) { measured.size.width.toDp() }
-    val horizontalScale = (desiredWidth / naturalWidth).coerceIn(0.5f, 1.6f)
-    val fittedFontSize = (148f * horizontalScale * 1.22f).sp
-
-    Text(
-        text = "CLICK125",
-        modifier = modifier
-            .requiredWidth(desiredWidth)
-            .clearAndSetSemantics {},
-        maxLines = 1,
-        softWrap = false,
-        overflow = TextOverflow.Clip,
-        style = style.copy(
-            fontSize = fittedFontSize,
-            lineHeight = fittedFontSize,
-            textGeometricTransform = TextGeometricTransform(scaleX = 1f / 1.22f),
-        ),
-    )
 }
 
 private data class NavigationItem(
@@ -261,7 +144,7 @@ private val navigationItems = listOf(
 
 @Composable
 private fun FloatingBottomNavigation(
-    fonts: MotoScopeFonts,
+    font: FontFamily,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -283,7 +166,7 @@ private fun FloatingBottomNavigation(
             navigationItems.forEach { item ->
                 NavigationItemView(
                     item = item,
-                    fonts = fonts,
+                    font = font,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -294,7 +177,7 @@ private fun FloatingBottomNavigation(
 @Composable
 private fun NavigationItemView(
     item: NavigationItem,
-    fonts: MotoScopeFonts,
+    font: FontFamily,
     modifier: Modifier = Modifier,
 ) {
     val tint = if (item.active) Ink else MutedInk.copy(alpha = 0.72f)
@@ -317,7 +200,7 @@ private fun NavigationItemView(
         Text(
             text = item.label,
             color = tint,
-            fontFamily = fonts.manrope,
+            fontFamily = font,
             fontSize = 10.sp,
             lineHeight = 12.sp,
             fontWeight = if (item.active) FontWeight.SemiBold else FontWeight.Medium,
